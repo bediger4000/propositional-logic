@@ -39,8 +39,8 @@ struct node {
 %type <node> term expression program stmnt
 %%
 program
-	: expression          { print_node($$); }
-	| program expression  { print_node($2); }
+	: expression          { print_node($$); printf("\n"); }
+	| program expression  { print_node($2); printf("\n"); }
 	| error               { $$ = NULL; }
 	;
 
@@ -114,23 +114,36 @@ void
 print_node(struct node *n)
 {
 	char oper = '?';
-	if (n->left) print_node(n->left);
+	if (n->left)
+	{
+		int print_paren = 0;
+		if (n->left->op != ID && n->left->op != NOT)
+		{
+			printf("(");
+			print_paren = 1;
+		}
+		print_node(n->left);
+		if (print_paren)
+		{
+			printf(")");
+		}
+	}
 	switch (n->op)
 	{
 	case IMPLY:
-		oper ='>';
+		oper = '>';
 		break;
 	case AND:
-		oper ='&';
+		oper = '&';
 		break;
 	case NOT:
-		oper ='~';
+		oper = '~';
 		break;
 	case OR:
-		oper ='|';
+		oper = '|';
 		break;
 	case EQUIV:
-		oper ='=';
+		oper = '=';
 		break;
 	case ID:
 		oper = '\0';
@@ -139,5 +152,18 @@ print_node(struct node *n)
 		printf(" %c ", oper);
 	if (n->identifier)
 		printf("%s", n->identifier);
-	if (n->right) print_node(n->right);
+	if (n->right)
+	{
+		int print_paren = 0;
+		if (n->right->op != ID && n->right->op != NOT)
+		{
+			printf("(");
+			print_paren = 1;
+		}
+		print_node(n->right);
+		if (print_paren)
+		{
+			printf(")");
+		}
+	}
 }
