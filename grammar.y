@@ -39,9 +39,9 @@ struct node {
 %type <node> term expression program stmnt
 %%
 program
-	: expression          { print_node($$); printf("\n"); }
-	| program expression  { print_node($2); printf("\n"); }
-	| error               { $$ = NULL; }
+	: expression          { print_node($$); printf("\n"); free_node($$); $$ = NULL; }
+	| program expression  { print_node($2); printf("\n"); free_node($2); $2 = NULL; }
+	| error               { if ($$) free_node($$); $$ = NULL; }
 	;
 
 expression
@@ -101,6 +101,14 @@ new_identifier(char *ident)
 void
 free_node(struct node *n)
 {
+	if (!n) return;
+
+	if (n->identifier)
+	{
+		free(n->identifier);
+		n->identifier = NULL;
+	}
+
 	if (n->left)
 		free_node(n->left);
 	if (n->right)
