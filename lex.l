@@ -12,7 +12,8 @@
 \&			{ return TK_CONJ; }
 \|			{ return TK_DISJ; }
 \~			{ return TK_NOT; }
-[a-zA-Z_][a-zA-Z_0-9'*]* { return TK_IDENT; }
+[a-zA-Z_][a-zA-Z_0-9'*]* { yylval.identifier = yytext; return TK_IDENT; }
+. { /* eat it. */ }
 %%
 
 int
