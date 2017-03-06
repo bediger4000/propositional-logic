@@ -5,9 +5,9 @@
 #ifdef YYBISON
 #define YYERROR_VERBOSE
 
-enum LogicalOperator { AND, NOT, OR, EQUIV, ID };
+enum LogicalOperator { AND, NOT, OR, EQUIV, ID, IMPLY };
 struct node *new_node(enum LogicalOperator op);
-struct node *new_identifier(xhar *ident);
+struct node *new_identifier(char *ident);
 void free_node(struct node *n);
 void print_node(struct node *n);
 
@@ -33,32 +33,33 @@ struct node {
 }
 
 %token TK_CONJ TK_DISJ TK_EQUIV TK_IMPLIES TK_LPAREN TK_RPAREN
-%token TK_IDENT TK_NOT
+%token <identifier> TK_IDENT TK_NOT
 %token TK_EOL
 
+%type <node> term expression program stmnt
 %%
 program
-	: expression
-	| program expression
-	| error
+	: expression          { print_node($$); }
+	| program expression  { print_node($2); }
+	| error               { $$ = NULL; }
 	;
 
 expression
-	: stmnt TK_EOL
+	: stmnt TK_EOL  { $$ = $1; }
 	;
 
 stmnt
-	: stmnt TK_EQUIV term
-	| stmnt TK_CONJ term
-	| stmnt TK_DISJ term
-	| stmnt TK_IMPLIES term
-	| TK_NOT term
+	: stmnt TK_EQUIV term   { $$ = new_node(EQUIV); $$->left = $1; $$->right = $3; }
+	| stmnt TK_CONJ term    { $$ = new_node(AND); $$->left = $1; $$->right = $3; }
+	| stmnt TK_DISJ term    { $$ = new_node(OR); $$->left = $1; $$->right = $3; }
+	| stmnt TK_IMPLIES term { $$ = new_node(IMPLY); $$->left = $1; $$->right = $3; }
+	| TK_NOT term           { $$ = $2; $$->op = NOT; }
 	| term
 	;
 
 term
-	: TK_IDENT
-	| TK_LPAREN stmnt TK_RPAREN
+	: TK_IDENT                  { $$ = new_identifier($1); }
+	| TK_LPAREN stmnt TK_RPAREN { $$ = $2; }
 	;
 
 %%
@@ -116,6 +117,9 @@ print_node(struct node *n)
 	if (n->left) print_node(n->left);
 	switch (n->op)
 	{
+	case IMPLY:
+		oper ='>';
+		break;
 	case AND:
 		oper ='&';
 		break;
