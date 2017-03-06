@@ -53,13 +53,13 @@ stmnt
 	| stmnt TK_CONJ term    { $$ = new_node(AND); $$->left = $1; $$->right = $3; }
 	| stmnt TK_DISJ term    { $$ = new_node(OR); $$->left = $1; $$->right = $3; }
 	| stmnt TK_IMPLIES term { $$ = new_node(IMPLY); $$->left = $1; $$->right = $3; }
-	| TK_NOT term           { $$ = $2; $$->op = NOT; }
 	| term
 	;
 
 term
 	: TK_IDENT                  { $$ = new_identifier($1); }
 	| TK_LPAREN stmnt TK_RPAREN { $$ = $2; }
+	| TK_NOT term           	{ $$ = new_node(NOT); $$->left = $2; }
 	;
 
 %%
@@ -113,7 +113,9 @@ free_node(struct node *n)
 void
 print_node(struct node *n)
 {
-	char oper = '?';
+	char oper = '\0';
+	if (NOT == n->op)
+		printf("~");
 	if (n->left)
 	{
 		int print_paren = 0;
@@ -123,10 +125,7 @@ print_node(struct node *n)
 			print_paren = 1;
 		}
 		print_node(n->left);
-		if (print_paren)
-		{
-			printf(")");
-		}
+		if (print_paren) printf(")");
 	}
 	switch (n->op)
 	{
@@ -136,22 +135,18 @@ print_node(struct node *n)
 	case AND:
 		oper = '&';
 		break;
-	case NOT:
-		oper = '~';
-		break;
 	case OR:
 		oper = '|';
 		break;
 	case EQUIV:
 		oper = '=';
 		break;
+	case NOT:
 	case ID:
 		oper = '\0';
 	}
-	if (oper)
-		printf(" %c ", oper);
-	if (n->identifier)
-		printf("%s", n->identifier);
+	if (oper) printf(" %c ", oper);
+	if (n->identifier) printf("%s", n->identifier);
 	if (n->right)
 	{
 		int print_paren = 0;
@@ -161,9 +156,6 @@ print_node(struct node *n)
 			print_paren = 1;
 		}
 		print_node(n->right);
-		if (print_paren)
-		{
-			printf(")");
-		}
+		if (print_paren) printf(")");
 	}
 }
