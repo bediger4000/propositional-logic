@@ -36,7 +36,8 @@ struct node {
 %token <identifier> TK_IDENT TK_NOT
 %token TK_EOL
 
-%type <node> term expression program stmnt
+%type <node> term expression program stmnt equivalence implication junction
+
 %%
 program
 	: expression          { print_node($$); printf("\n"); free_node($$); $$ = NULL; }
@@ -49,10 +50,22 @@ expression
 	;
 
 stmnt
-	: stmnt TK_EQUIV term   { $$ = new_node(EQUIV); $$->left = $1; $$->right = $3; }
-	| stmnt TK_CONJ term    { $$ = new_node(AND); $$->left = $1; $$->right = $3; }
-	| stmnt TK_DISJ term    { $$ = new_node(OR); $$->left = $1; $$->right = $3; }
-	| stmnt TK_IMPLIES term { $$ = new_node(IMPLY); $$->left = $1; $$->right = $3; }
+	: equivalence  { $$ = $1; }
+	;
+	
+equivalence
+	: equivalence TK_EQUIV implication   { $$ = new_node(EQUIV); $$->left = $1; $$->right = $3; }
+	| implication
+	;
+	
+implication
+	: implication TK_IMPLIES junction { $$ = new_node(IMPLY); $$->left = $1; $$->right = $3; }
+	| junction
+	;
+
+junction
+	: junction TK_CONJ term    { $$ = new_node(AND); $$->left = $1; $$->right = $3; }
+	| junction TK_DISJ term    { $$ = new_node(OR); $$->left = $1; $$->right = $3; }
 	| term
 	;
 
